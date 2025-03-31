@@ -3,7 +3,7 @@ GoodJob::Engine.middleware.use(ActionDispatch::Cookies)
 GoodJob::Engine.middleware.use(ActionDispatch::Session::CookieStore)
 
 Rails.application.configure do
-  config.good_job = {
+  config.good_job = config.good_job.merge({
     enable_cron: true,
     cron: {
       import_approved_projects: {
@@ -13,5 +13,5 @@ Rails.application.configure do
       }
     },
     dashboard_default_locale: :en
-  }
+  })
 end
