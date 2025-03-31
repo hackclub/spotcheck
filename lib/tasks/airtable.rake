@@ -12,5 +12,15 @@ namespace :airtable do
     puts "===================="
     programs_schema = airtable.get_table_schema("YSWS Programs")
     puts JSON.pretty_generate(programs_schema)
+
+    puts "\n\nYSWS Spot Checks Schema:"
+    puts "===================="
+    spot_checks_schema = airtable.get_table_schema("YSWS Spot Checks")
+    puts JSON.pretty_generate(spot_checks_schema)
+
+    puts "\n\nYSWS Spot Check Sessions Schema:"
+    puts "===================="
+    spot_check_sessions_schema = airtable.get_table_schema("YSWS Spot Check Sessions")
+    puts JSON.pretty_generate(spot_check_sessions_schema)
   end
 end 

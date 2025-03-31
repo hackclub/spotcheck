@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_26_183816) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -179,18 +179,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_26_183816) do
   end
 
   create_table "ysws_spot_checks", primary_key: "airtable_id", id: :string, force: :cascade do |t|
-    t.string "approved_project_id", null: false
-    t.string "assessment", null: false
+    t.string "approved_project_id"
+    t.string "assessment"
     t.text "notes"
-    t.string "reviewer_slack_id", null: false
+    t.string "reviewer_slack_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "start_time"
     t.datetime "end_time"
     t.bigint "spot_check_session_id"
-    t.string "reviewer_name", default: "", null: false
-    t.string "reviewer_email", default: "", null: false
-    t.string "reviewer_avatar_url", default: "", null: false
+    t.string "reviewer_name", default: ""
+    t.string "reviewer_email", default: ""
+    t.string "reviewer_avatar_url", default: ""
     t.index ["approved_project_id"], name: "index_ysws_spot_checks_on_approved_project_id"
     t.index ["assessment"], name: "index_ysws_spot_checks_on_assessment"
     t.index ["spot_check_session_id"], name: "index_ysws_spot_checks_on_spot_check_session_id"
