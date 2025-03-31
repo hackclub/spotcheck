@@ -1,6 +1,6 @@
 <%
   running_job = GoodJob::Execution
-    .where(job_class: 'Ysws::ImportApprovedProjectsJob')
+    .where(job_class: 'Ysws::PullFromAirtable')
     .where(finished_at: nil)
     .first
 

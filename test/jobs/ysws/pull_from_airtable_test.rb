@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Ysws::ImportApprovedProjectsJobTest < ActiveJob::TestCase
+class Ysws::PullFromAirtableTest < ActiveJob::TestCase
   # test "the truth" do
   #   assert true
   # end

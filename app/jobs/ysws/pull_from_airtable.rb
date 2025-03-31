@@ -1,5 +1,5 @@
 module Ysws
-  class ImportApprovedProjectsJob < ApplicationJob
+  class PullFromAirtable < ApplicationJob
     queue_as :default
 
     def perform

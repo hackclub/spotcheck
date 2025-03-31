@@ -7,7 +7,7 @@ module Ysws
     end
 
     def create
-      Ysws::ImportApprovedProjectsJob.perform_later
+      Ysws::PullFromAirtable.perform_later
       render turbo_stream: turbo_stream.update("reload-button-frame", partial: 'ysws/reload_button')
     end
 

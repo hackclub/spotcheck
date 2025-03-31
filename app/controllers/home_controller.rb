@@ -16,13 +16,13 @@ class HomeController < ApplicationController
     
     # Get reload job statistics from GoodJob
     @last_job = GoodJob::Execution
-      .where(job_class: ['Ysws::ImportApprovedProjectsJob', 'Ysws::ImportProgramsJob'])
+      .where(job_class: ['Ysws::PullFromAirtable'])
       .where.not(finished_at: nil)
       .order(finished_at: :desc)
       .first
 
     @average_runtime = GoodJob::Execution
-      .where(job_class: ['Ysws::ImportApprovedProjectsJob', 'Ysws::ImportProgramsJob'])
+      .where(job_class: ['Ysws::PullFromAirtable'])
       .where.not(finished_at: nil)
       .average("EXTRACT(epoch FROM finished_at - created_at)")
 
