@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_31_191519) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -165,9 +165,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "ysws_spot_check_sessions", force: :cascade do |t|
+  create_table "ysws_spot_check_sessions", primary_key: "airtable_id", id: :string, force: :cascade do |t|
     t.jsonb "filters"
-    t.integer "sampling_strategy"
     t.string "creator_slack_id"
     t.string "creator_name"
     t.string "creator_email"
@@ -176,6 +175,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
     t.datetime "end_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "sampling_strategy", default: "random"
+    t.index ["airtable_id"], name: "index_ysws_spot_check_sessions_on_airtable_id", unique: true
   end
 
   create_table "ysws_spot_checks", primary_key: "airtable_id", id: :string, force: :cascade do |t|
@@ -187,7 +188,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
     t.datetime "updated_at", null: false
     t.datetime "start_time"
     t.datetime "end_time"
-    t.bigint "spot_check_session_id"
+    t.string "spot_check_session_id"
     t.string "reviewer_name", default: ""
     t.string "reviewer_email", default: ""
     t.string "reviewer_avatar_url", default: ""
@@ -198,5 +199,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_184657) do
 
   add_foreign_key "ysws_approved_projects", "ysws_programs", primary_key: "airtable_id"
   add_foreign_key "ysws_spot_checks", "ysws_approved_projects", column: "approved_project_id", primary_key: "airtable_id"
-  add_foreign_key "ysws_spot_checks", "ysws_spot_check_sessions", column: "spot_check_session_id"
+  add_foreign_key "ysws_spot_checks", "ysws_spot_check_sessions", column: "spot_check_session_id", primary_key: "airtable_id"
 end

@@ -9,6 +9,7 @@ module Ysws
       ActiveRecord::Base.transaction do
         # First delete all existing records to avoid foreign key conflicts
         Ysws::SpotCheck.delete_all
+        Ysws::SpotCheckSession.delete_all
         Ysws::ApprovedProject.delete_all
         Ysws::Program.delete_all
         
@@ -18,7 +19,10 @@ module Ysws
         # Then import projects with program associations
         import_projects(airtable)
 
-        # Finally import spot checks
+        # Import spot check sessions
+        import_spot_check_sessions(airtable)
+
+        # Finally import spot checks with session associations
         import_spot_checks(airtable)
       end
     end
@@ -124,6 +128,46 @@ module Ysws
       Ysws::ApprovedProject.insert_all!(records_to_insert) if records_to_insert.any?
     end
 
+    def import_spot_check_sessions(airtable)
+      offset = nil
+      records_to_insert = []
+      
+      # Process page by page
+      loop do
+        response = airtable.list_records(Rails.application.credentials.airtable.ysws.table_id.spot_check_sessions, offset: offset)
+        
+        response["records"].each do |record|
+          fields = sanitize_fields(record["fields"])
+          
+          # Parse the JSON filters from Airtable
+          filters = begin
+            JSON.parse(fields["Filters"]) if fields["Filters"].present?
+          rescue JSON::ParserError
+            {} # Default to empty hash if JSON is invalid
+          end
+
+          records_to_insert << {
+            airtable_id: record["id"],
+            filters: filters || {},
+            sampling_strategy: fields["Sampling Strategy"]&.downcase,
+            creator_name: fields["Creator Name"],
+            creator_slack_id: fields["Creator Slack ID"],
+            creator_email: fields["Creator Email"],
+            creator_avatar_url: fields["Creator Avatar URL"],
+            start_time: fields["Start Time"],
+            end_time: fields["End Time"],
+            created_at: record["createdTime"] || Time.current,
+            updated_at: Time.current
+          }
+        end
+
+        offset = response["offset"]
+        break unless offset
+      end
+
+      Ysws::SpotCheckSession.insert_all!(records_to_insert) if records_to_insert.any?
+    end
+
     def import_spot_checks(airtable)
       offset = nil
       records_to_insert = []
@@ -137,6 +181,7 @@ module Ysws
           
           # Get the project ID from the Project field (which is a link to the Approved Projects table)
           project_id = fields["Project"]&.first
+          session_id = fields["Spot Check Session"]&.first
 
           next unless project_id # Skip if no project association
 
@@ -151,8 +196,9 @@ module Ysws
             reviewer_avatar_url: fields["Reviewer Avatar URL"],
             start_time: fields["Duration - Start Time"],
             end_time: fields["Duration - End Time"],
-            created_at: fields["Created Time"] || Time.current,
-            updated_at: fields["Last Modified Time"] || Time.current
+            spot_check_session_id: session_id,
+            created_at: record["createdTime"] || Time.current,
+            updated_at: Time.current
           }
         end
 

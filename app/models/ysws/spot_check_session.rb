@@ -1,6 +1,11 @@
 module Ysws
   class SpotCheckSession < ApplicationRecord
-    enum :sampling_strategy, { random: 0, highest_hours: 1 }, default: :random
+    self.primary_key = :airtable_id
+
+    enum :sampling_strategy, {
+      random: 'random',
+      highest_hours: 'highest_hours'
+    }, default: 'random'
 
     validates :filters, presence: true
     validates :creator_slack_id, presence: true
@@ -10,7 +15,13 @@ module Ysws
     validates :start_time, presence: true
     validate :validate_custom_date_range
 
+    # Skip airtable_id validation during creation
+    validates :airtable_id, presence: true, on: :update
+
     has_many :spot_checks, dependent: :nullify
+
+    # Create Airtable record after validation passes
+    after_validation :create_airtable_record, on: :create, if: -> { errors.empty? }
 
     def duration
       return nil if start_time.nil? || end_time.nil?
@@ -213,6 +224,31 @@ module Ysws
       elsif filters["start_date"].present? || filters["end_date"].present?
         errors.add(:filters, "Both start date and end date must be provided for custom range")
       end
+    end
+
+    def create_airtable_record
+      table_id = Rails.application.credentials.airtable.ysws.table_id.spot_check_sessions
+      response = AirtableService.instance.create_record(
+        table_id,
+        {
+          'Filters' => filters.to_json,
+          'Sampling Strategy' => sampling_strategy,
+          'Creator Name' => creator_name,
+          'Creator Slack ID' => creator_slack_id,
+          'Creator Email' => creator_email,
+          'Creator Avatar URL' => creator_avatar_url,
+          'Start Time' => start_time&.iso8601,
+          'End Time' => end_time&.iso8601
+        }
+      )
+
+      if response['error']
+        errors.add(:base, "Error creating Airtable record: #{response['error']}")
+        return false
+      end
+
+      self.airtable_id = response['id']
+      true
     end
   end
 end 

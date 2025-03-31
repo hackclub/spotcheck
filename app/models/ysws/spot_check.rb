@@ -74,7 +74,8 @@ module Ysws
           'Reviewer Email' => reviewer_email,
           'Reviewer Avatar URL' => reviewer_avatar_url,
           'Duration - Start Time' => start_time&.iso8601,
-          'Duration - End Time' => end_time&.iso8601
+          'Duration - End Time' => end_time&.iso8601,
+          'Spot Check Session' => spot_check_session ? [spot_check_session.airtable_id] : nil
         }
       )
 
