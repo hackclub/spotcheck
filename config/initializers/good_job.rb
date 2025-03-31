@@ -2,11 +2,16 @@
 GoodJob::Engine.middleware.use(ActionDispatch::Cookies)
 GoodJob::Engine.middleware.use(ActionDispatch::Session::CookieStore)
 
-GoodJob.configuration do |config|
-  config.cron = {
-    import_approved_projects: {
-      cron: "15 * * * *", # Every hour at :15
-      class: "Ysws::PullFromAirtable"
-    }
+Rails.application.configure do
+  config.good_job = {
+    enable_cron: true,
+    cron: {
+      import_approved_projects: {
+        cron: "15 * * * *", # Every hour at :15
+        class: "Ysws::PullFromAirtable",
+        description: "Import approved projects from Airtable hourly"
+      }
+    },
+    dashboard_default_locale: :en
   }
 end
