@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_31_191519) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_31_195349) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -148,6 +148,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_191519) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "ysws_program_id"
+    t.jsonb "screenshot"
     t.index ["approved_at"], name: "index_ysws_approved_projects_on_approved_at"
     t.index ["email"], name: "index_ysws_approved_projects_on_email"
     t.index ["first_name", "last_name"], name: "index_ysws_approved_projects_on_first_name_and_last_name"

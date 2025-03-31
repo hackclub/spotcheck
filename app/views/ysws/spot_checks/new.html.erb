@@ -31,6 +31,28 @@
           </div>
         </div>
 
+        <!-- Screenshots -->
+        <% if @approved_project.screenshot_thumbnail_urls.any? %>
+          <div class="mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <% @approved_project.screenshot_thumbnail_urls.each do |screenshot| %>
+                <div class="group relative overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl">
+                  <div class="relative" style="padding-top: <%= (screenshot[:height].to_f / screenshot[:width].to_f * 100).round(2) %>%">
+                    <img 
+                      src="<%= screenshot[:url] %>" 
+                      alt="Project screenshot" 
+                      width="<%= screenshot[:width] %>"
+                      height="<%= screenshot[:height] %>"
+                      class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    >
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
         <!-- Project URLs -->
         <div class="flex gap-4 mb-8">
           <% if @approved_project.playable_url.present? %>

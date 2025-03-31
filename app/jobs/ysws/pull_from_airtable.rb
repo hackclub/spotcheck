@@ -117,6 +117,7 @@ module Ysws
             archive_trigger_rearchive2: fields["Archive - Trigger Rearchive 2"],
             hack_clubber_geocoded_country: fields["Hack Clubber–Geocoded Country"],
             ysws_program_id: program_id,
+            screenshot: fields["Screenshot"],
             updated_at: Time.current
           }
         end
