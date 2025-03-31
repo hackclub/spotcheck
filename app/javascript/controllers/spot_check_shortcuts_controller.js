@@ -7,29 +7,19 @@ export default class extends Controller {
   }
 
   connect() {
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this)
+    document.addEventListener('keydown', this.boundHandleKeyDown)
     this.updateShortcutIndicators()
-    this.updateUrlTargets()
-    document.addEventListener('keydown', this.handleKeyDown.bind(this))
   }
 
   disconnect() {
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+    document.removeEventListener('keydown', this.boundHandleKeyDown)
   }
 
   updateShortcutIndicators() {
     document.querySelectorAll('.js-shortcut-key').forEach(el => {
       el.textContent = this.platformMacValue ? el.dataset.mac : el.dataset.win
     })
-  }
-
-  updateUrlTargets() {
-    // Clear any cached URL data
-    if (this.hasLiveUrlTarget) {
-      this.liveUrlTarget.dataset.url = this.liveUrlTarget.getAttribute('href')
-    }
-    if (this.hasCodeUrlTarget) {
-      this.codeUrlTarget.dataset.url = this.codeUrlTarget.getAttribute('href')
-    }
   }
 
   handleKeyDown(e) {
