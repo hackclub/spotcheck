@@ -42,21 +42,23 @@
                       ["Last 7 days", "7d"],
                       ["Last 30 days", "30d"],
                       ["Custom range", "custom"]
-                    ], { selected: "24h" }, 
+                    ], { selected: @session.filters&.fetch('timeframe', '24h') }, 
                        class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md",
                        data: { action: "change->timeframe#toggle" } %>
 
-                    <div data-timeframe-target="customRange" class="mt-4 hidden">
+                    <div data-timeframe-target="customRange" class="mt-4 <%= @session.filters&.fetch('timeframe', '') == 'custom' ? '' : 'hidden' %>">
                       <div class="grid grid-cols-2 gap-4">
                         <div>
                           <%= ff.label :start_date, "Start Date", class: "block text-sm font-medium text-gray-700" %>
                           <%= ff.date_field :start_date, 
+                              value: @session.filters&.fetch('start_date', nil),
                               class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md",
                               data: { timeframe_target: "dateInput" } %>
                         </div>
                         <div>
                           <%= ff.label :end_date, "End Date", class: "block text-sm font-medium text-gray-700" %>
                           <%= ff.date_field :end_date, 
+                              value: @session.filters&.fetch('end_date', nil),
                               class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md",
                               data: { timeframe_target: "dateInput" } %>
                         </div>
@@ -71,7 +73,7 @@
                   <div class="mt-1">
                     <%= f.fields_for :filters do |ff| %>
                       <%= ff.collection_select :ysws_program_ids, @programs, :airtable_id, :name, 
-                        { include_blank: true }, 
+                        { selected: @session.filters&.fetch('ysws_program_ids', []) }, 
                         { multiple: true, 
                           class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md",
                           data: { controller: "slim-select" } } %>
@@ -84,7 +86,7 @@
                   <%= f.label :sampling_strategy, "Sampling Strategy", class: "block text-sm font-medium text-gray-700" %>
                   <%= f.select :sampling_strategy, 
                     Ysws::SpotCheckSession.sampling_strategies.keys.map { |key| [key.humanize, key] },
-                    {}, 
+                    { selected: @session.sampling_strategy },
                     class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
                   <p class="mt-2 text-sm text-gray-500">Choose how projects will be selected for review</p>
                 </div>

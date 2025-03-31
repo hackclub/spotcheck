@@ -6,6 +6,11 @@ module Ysws
                class_name: 'Ysws::Program',
                optional: true
 
+    has_many :spot_checks,
+             class_name: 'Ysws::SpotCheck',
+             foreign_key: :approved_project_id,
+             primary_key: :airtable_id
+
     def screenshot_thumbnail_urls
       return [] unless screenshot.is_a?(Array)
 

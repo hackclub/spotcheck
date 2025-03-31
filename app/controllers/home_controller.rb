@@ -39,5 +39,17 @@ class HomeController < ApplicationController
       .where(created_at: et_today_start..et_today_end)
       .order(created_at: :desc)
       .limit(3)
+
+    # Generate month ranges for 2025 (only past months, in reverse chronological order)
+    current_date = Date.current
+    @months_2025 = (1..12).map do |month|
+      start_date = Date.new(2025, month, 1)
+      end_date = start_date.end_of_month
+      next if start_date > current_date # Skip future months
+      {
+        name: start_date.strftime("%B"),
+        range: start_date..end_date
+      }
+    end.compact.reverse # Remove nils and reverse order
   end
 end 

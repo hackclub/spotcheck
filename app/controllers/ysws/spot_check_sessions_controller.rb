@@ -3,12 +3,15 @@ module Ysws
     before_action :authenticate_user!
 
     def new
-      @session = SpotCheckSession.new(filters: {})
+      @session = SpotCheckSession.new(spot_check_session_params)
       @programs = Program.all
+
+      # For debugging
+      Rails.logger.debug "New SpotCheckSession filters: #{@session.filters.inspect}"
     end
 
     def create
-      @session = SpotCheckSession.new(session_params.merge(
+      @session = SpotCheckSession.new(spot_check_session_params.merge(
         creator_slack_id: session[:user_slack_id],
         creator_name: session[:user_info]['name'],
         creator_email: session[:user_info]['email'],
@@ -16,7 +19,7 @@ module Ysws
         start_time: Time.current
       ))
 
-      Rails.logger.debug "Creating SpotCheckSession with params: #{session_params.inspect}"
+      Rails.logger.debug "Creating SpotCheckSession with params: #{spot_check_session_params.inspect}"
       Rails.logger.debug "Full session attributes: #{@session.attributes.inspect}"
 
       if @session.save
@@ -35,7 +38,9 @@ module Ysws
 
     private
 
-    def session_params
+    def spot_check_session_params
+      return {} if params[:spot_check_session].blank?
+      
       params.require(:spot_check_session).permit(
         :sampling_strategy,
         filters: [:timeframe, :start_date, :end_date, { ysws_program_ids: [] }]
