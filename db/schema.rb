@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_11_160650) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_15_012528) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -179,11 +179,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_11_160650) do
 
   create_table "ysws_authors", primary_key: "airtable_id", id: :string, force: :cascade do |t|
     t.string "name"
-    t.string "slack_id"
+    t.string "slack_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_ysws_authors_on_name"
-    t.index ["slack_id"], name: "index_ysws_authors_on_slack_id"
+    t.index ["slack_url"], name: "index_ysws_authors_on_slack_url"
   end
 
   create_table "ysws_programs", primary_key: "airtable_id", id: :string, force: :cascade do |t|

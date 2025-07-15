@@ -27,5 +27,15 @@ module Ysws
     def attributed_to_project?(project_id)
       attributed_projects.exists?(airtable_id: project_id.to_s)
     end
+
+    # Extract Slack user ID from Slack URL
+    # Format: https://hackclub.slack.com/team/U01G0Q9K998
+    # Returns: U01G0Q9K998
+    def slack_id
+      return nil unless slack_url.present?
+      
+      # Extract the user ID from the URL path
+      slack_url.split('/').last
+    end
   end
 end

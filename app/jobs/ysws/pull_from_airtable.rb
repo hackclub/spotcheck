@@ -233,7 +233,7 @@ module Ysws
           records_to_insert << {
             airtable_id: record["id"],
             name: fields["Name"],
-            slack_id: fields["Slack ID"],
+            slack_url: fields["Slack URL"],
             created_at: Time.current,
             updated_at: Time.current
           }
