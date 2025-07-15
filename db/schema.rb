@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_31_195349) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_11_160650) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_195349) do
     t.string "slack_user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "access_token"
     t.index ["slack_user_id"], name: "index_authorized_users_on_slack_user_id"
   end
 
@@ -156,6 +157,35 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_195349) do
     t.index ["ysws_program_id"], name: "index_ysws_approved_projects_on_ysws_program_id"
   end
 
+  create_table "ysws_author_approved_projects", force: :cascade do |t|
+    t.string "author_id", null: false
+    t.string "approved_project_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approved_project_id"], name: "index_ysws_author_approved_projects_on_approved_project_id"
+    t.index ["author_id", "approved_project_id"], name: "index_ysws_author_approved_projects_on_author_and_project", unique: true
+    t.index ["author_id"], name: "index_ysws_author_approved_projects_on_author_id"
+  end
+
+  create_table "ysws_author_programs", force: :cascade do |t|
+    t.string "author_id", null: false
+    t.string "program_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id", "program_id"], name: "index_ysws_author_programs_on_author_id_and_program_id", unique: true
+    t.index ["author_id"], name: "index_ysws_author_programs_on_author_id"
+    t.index ["program_id"], name: "index_ysws_author_programs_on_program_id"
+  end
+
+  create_table "ysws_authors", primary_key: "airtable_id", id: :string, force: :cascade do |t|
+    t.string "name"
+    t.string "slack_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_ysws_authors_on_name"
+    t.index ["slack_id"], name: "index_ysws_authors_on_slack_id"
+  end
+
   create_table "ysws_programs", primary_key: "airtable_id", id: :string, force: :cascade do |t|
     t.string "name"
     t.decimal "average_hours_per_grant", precision: 10, scale: 1
@@ -199,6 +229,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_195349) do
   end
 
   add_foreign_key "ysws_approved_projects", "ysws_programs", primary_key: "airtable_id"
+  add_foreign_key "ysws_author_approved_projects", "ysws_approved_projects", column: "approved_project_id", primary_key: "airtable_id"
+  add_foreign_key "ysws_author_approved_projects", "ysws_authors", column: "author_id", primary_key: "airtable_id"
+  add_foreign_key "ysws_author_programs", "ysws_authors", column: "author_id", primary_key: "airtable_id"
+  add_foreign_key "ysws_author_programs", "ysws_programs", column: "program_id", primary_key: "airtable_id"
   add_foreign_key "ysws_spot_checks", "ysws_approved_projects", column: "approved_project_id", primary_key: "airtable_id"
   add_foreign_key "ysws_spot_checks", "ysws_spot_check_sessions", column: "spot_check_session_id", primary_key: "airtable_id"
 end

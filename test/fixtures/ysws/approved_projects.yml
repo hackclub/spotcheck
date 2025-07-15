@@ -1,15 +1,23 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  airtable_id: MyString
-  name: MyString
-  description: MyText
-  status: MyString
+  airtable_id: project1
+  email: test1@example.com
+  first_name: Test
+  last_name: User1
+  description: Sample project description
   approved_at: 2025-03-22 13:09:04
+  github_username: testuser1
+  playable_url: https://example.com/project1
+  code_url: https://github.com/testuser1/project1
 
 two:
-  airtable_id: MyString
-  name: MyString
-  description: MyText
-  status: MyString
-  approved_at: 2025-03-22 13:09:04
+  airtable_id: project2
+  email: test2@example.com
+  first_name: Test
+  last_name: User2
+  description: Another project description
+  approved_at: 2025-03-22 14:09:04
+  github_username: testuser2
+  playable_url: https://example.com/project2
+  code_url: https://github.com/testuser2/project2

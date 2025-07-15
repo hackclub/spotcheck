@@ -11,6 +11,10 @@ module Ysws
              foreign_key: :approved_project_id,
              primary_key: :airtable_id
 
+    # Rails associations for authors
+    has_many :author_approved_projects, class_name: 'Ysws::AuthorApprovedProject', foreign_key: :approved_project_id, dependent: :destroy
+    has_many :attributed_authors, through: :author_approved_projects, source: :author
+
     def screenshot_thumbnail_urls
       return [] unless screenshot.is_a?(Array)
 

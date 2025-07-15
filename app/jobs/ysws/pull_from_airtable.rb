@@ -7,17 +7,25 @@ module Ysws
       
       # Use a single transaction for the entire import to ensure consistency
       ActiveRecord::Base.transaction do
-        # First delete all existing records to avoid foreign key conflicts
+        # Clear association tables first (due to foreign key constraints)
+        Ysws::AuthorProgram.delete_all
+        Ysws::AuthorApprovedProject.delete_all
+        
+        # Then delete all existing records
         Ysws::SpotCheck.delete_all
         Ysws::SpotCheckSession.delete_all
         Ysws::ApprovedProject.delete_all
         Ysws::Program.delete_all
+        Ysws::Author.delete_all
         
         # Import programs first
         import_programs(airtable)
         
-        # Then import projects with program associations
+        # Import projects with program associations (before authors, so author associations can reference them)
         import_projects(airtable)
+        
+        # Then import authors with project/program associations
+        import_authors(airtable)
 
         # Import spot check sessions
         import_spot_check_sessions(airtable)
@@ -208,6 +216,73 @@ module Ysws
       end
 
       Ysws::SpotCheck.insert_all!(records_to_insert) if records_to_insert.any?
+    end
+
+    def import_authors(airtable)
+      offset = nil
+      records_to_insert = []
+      author_associations = { programs: [], approved_projects: [] }
+      
+      # Process page by page
+      loop do
+        response = airtable.list_records("tblRf1BQs5H8298gW", offset: offset)
+        
+        response["records"].each do |record|
+          fields = sanitize_fields(record["fields"])
+          
+          records_to_insert << {
+            airtable_id: record["id"],
+            name: fields["Name"],
+            slack_id: fields["Slack ID"],
+            created_at: Time.current,
+            updated_at: Time.current
+          }
+          
+          # Store associations to create after authors are inserted
+          author_id = record["id"]
+          
+          # Program associations
+          if fields["Current YSWS Programs"].present?
+            fields["Current YSWS Programs"].each do |program_id|
+              author_associations[:programs] << {
+                author_id: author_id,
+                program_id: program_id,
+                created_at: Time.current,
+                updated_at: Time.current
+              }
+            end
+          end
+          
+          # Approved project associations
+          if fields["Attributed Grants"].present?
+            fields["Attributed Grants"].each do |project_id|
+              author_associations[:approved_projects] << {
+                author_id: author_id,
+                approved_project_id: project_id,
+                created_at: Time.current,
+                updated_at: Time.current
+              }
+            end
+          end
+        end
+
+        offset = response["offset"]
+        break unless offset
+      end
+
+      # Insert authors first
+      Ysws::Author.insert_all!(records_to_insert) if records_to_insert.any?
+      
+      # Filter associations to only include existing programs and projects
+      existing_programs = Ysws::Program.pluck(:airtable_id).to_set
+      existing_projects = Ysws::ApprovedProject.pluck(:airtable_id).to_set
+      
+      valid_program_associations = author_associations[:programs].select { |assoc| existing_programs.include?(assoc[:program_id]) }
+      valid_project_associations = author_associations[:approved_projects].select { |assoc| existing_projects.include?(assoc[:approved_project_id]) }
+      
+      # Then insert valid associations
+      Ysws::AuthorProgram.insert_all!(valid_program_associations) if valid_program_associations.any?
+      Ysws::AuthorApprovedProject.insert_all!(valid_project_associations) if valid_project_associations.any?
     end
 
     def sanitize_fields(fields)

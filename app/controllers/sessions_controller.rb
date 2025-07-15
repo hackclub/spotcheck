@@ -9,12 +9,17 @@ class SessionsController < ApplicationController
   def create
     auth = request.env["omniauth.auth"]
     slack_user_id = auth["uid"]
+    access_token = auth.credentials.token
 
-    unless AuthorizedUser.exists?(slack_user_id: slack_user_id)
+    user = AuthorizedUser.find_by(slack_user_id: slack_user_id)
+    unless user
       reset_session
       redirect_to login_path, alert: "You are not authorized to access this application."
       return
     end
+
+    # Update user with latest access token
+    user.update!(access_token: access_token)
 
     session[:user_slack_id] = slack_user_id
     session[:user_info] = {

@@ -7,6 +7,20 @@ module Ysws
              foreign_key: :ysws_program_id,
              dependent: :nullify
 
+    # Rails associations for authors
+    has_many :author_programs, class_name: 'Ysws::AuthorProgram', foreign_key: :program_id, dependent: :destroy
+    has_many :current_authors, through: :author_programs, source: :author
+    
+    # Returns authors who have grants attributed to projects in this program
+    def project_authors
+      project_ids = approved_projects.pluck(:airtable_id)
+      return Ysws::Author.none if project_ids.empty?
+      
+      Ysws::Author.joins(:author_approved_projects)
+                  .where(ysws_author_approved_projects: { approved_project_id: project_ids })
+                  .distinct
+    end
+
     # Returns a hash containing review status information for a given time period
     # @param time_period [Range] Optional date range to check (default: all time)
     # @return [Hash] containing :needs_more_reviews, :reviewed_count, :total_count, and :percentage
