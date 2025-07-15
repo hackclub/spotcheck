@@ -25,7 +25,7 @@ class SessionsController < ApplicationController
     session[:user_info] = {
       name: auth.info.name,
       email: auth.info.email,
-      image: auth.info.image_512
+      image: auth.info.image
     }
 
     redirect_to authenticated_root_path, notice: "Successfully signed in!"

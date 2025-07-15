@@ -48,7 +48,7 @@ gem "thruster", require: false
 
 # Slack authentication
 gem "omniauth"
-gem "omniauth-slack"
+gem "omniauth-sign-in-with-slack"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
