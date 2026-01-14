@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authenticated users (GYEs, Staff, Leadership)
+model User {
+  id            String    @id @default(cuid())
+  slackId       String    @unique
+  email         String?
+  name          String?
+  avatarUrl     String?
+  role          UserRole  @default(REVIEWER)
+  dailyQuota    Int       @default(10)
+  weeklyQuota   Int       @default(50)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  spotChecks    SpotCheck[]
+
+  @@index([slackId])
+}
+
+enum UserRole {
+  REVIEWER      // GYEs doing spot checks
+  LEADERSHIP    // Max, Deven, Zach - can see all dashboards
+  ADMIN         // System admin
+}
+
+// Assessment values for spot checks
+enum Assessment {
+  GREEN   // Looks good
+  YELLOW  // Has issues
+  RED     // Should be removed
+}
+
+// Issue types for yellow/red assessments
+enum IssueType {
+  // Red (Remove)
+  DUPLICATE       // Same project submitted multiple times
+  NOT_REAL        // Test submission, placeholder, not a project
+  PLAGIARISM      // Code copied from tutorial/template
+  BROKEN          // No working demo AND no way to run
+  FRAUD           // Intentionally misleading
+
+  // Yellow (Issues)
+  REPO_404        // Code repository doesn't exist
+  DEMO_404        // Playable/demo URL doesn't work
+  HOURS_INFLATED  // Hours claimed too high for scope
+  INCOMPLETE      // Missing required components
+  LOW_EFFORT      // Minimal work, doesn't meet standards
+  NEEDS_INFO      // Can't evaluate without more info
+  OTHER           // Other issue (see notes)
+}
+
+// Core spot check records
+model SpotCheck {
+  id                String      @id @default(cuid())
+
+  // Project reference (from Airtable)
+  projectId         String      // Airtable record ID
+  projectName       String?
+  programName       String?     // e.g., "Summer of Making", "Cider"
+
+  // Approver info (from Airtable)
+  approverSlackId   String?
+  approverName      String?
+  approvedAt        DateTime?
+
+  // Author info (from Airtable)
+  authorSlackId     String?
+  authorName        String?
+
+  // Review info
+  reviewer          User        @relation(fields: [reviewerId], references: [id])
+  reviewerId        String
+
+  assessment        Assessment
+  issueType         IssueType?
+  notesForAuthor    String?     // Sent to author
+  internalNotes     String?     // Not sent to author
+
+  timeSpentSeconds  Int         @default(0)
+
+  // Auto-flagging
+  autoFlagged       Boolean     @default(false)
+  autoFlagReasons   String[]    // e.g., ["repo_404", "high_hours"]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  notifications     AuthorNotification[]
+
+  @@index([projectId])
+  @@index([reviewerId])
+  @@index([approverSlackId])
+  @@index([authorSlackId])
+  @@index([createdAt])
+  @@index([assessment])
+}
+
+// Notification types
+enum NotificationType {
+  YELLOW_FLAG
+  RED_FLAG
+  REMOVAL_WARNING
+  REMOVED
+  RESOLVED
+}
+
+// Resolution outcomes
+enum Resolution {
+  UPHELD      // Original assessment stands
+  OVERTURNED  // Assessment was wrong
+  FIXED       // Author fixed the issue
+}
+
+// Notifications sent to project authors
+model AuthorNotification {
+  id                String           @id @default(cuid())
+
+  spotCheck         SpotCheck        @relation(fields: [spotCheckId], references: [id])
+  spotCheckId       String
+
+  notificationType  NotificationType
+  slackMessageTs    String?          // Slack message timestamp
+  slackChannelId    String?          // DM channel ID
+
+  sentAt            DateTime         @default(now())
+
+  // Response tracking
+  authorResponded   Boolean          @default(false)
+  authorResponse    String?
+
+  // Resolution
+  resolved          Boolean          @default(false)
+  resolvedAt        DateTime?
+  resolvedBy        String?          // Slack ID of resolver
+  resolution        Resolution?
+
+  @@index([spotCheckId])
+  @@index([sentAt])
+}
+
+// Queue items for projects needing review
+model ReviewQueue {
+  id                String    @id @default(cuid())
+
+  // Project info (from Airtable)
+  projectId         String    @unique  // Airtable record ID
+  projectName       String
+  programName       String?
+  codeUrl           String?
+  playableUrl       String?
+  screenshotUrl     String?
+  description       String?
+  hoursClaimed      Float?
+
+  // Approver info
+  approverSlackId   String?
+  approverName      String?
+  approvedAt        DateTime?
+
+  // Author info
+  authorSlackId     String?
+  authorName        String?
+  authorAge         Int?
+
+  // Queue priority
+  priority          QueuePriority @default(STANDARD)
+  autoFlagged       Boolean       @default(false)
+  autoFlagReasons   String[]
+
+  // Status
+  assignedTo        String?       // Reviewer's user ID if assigned
+  assignedAt        DateTime?
+
+  createdAt         DateTime      @default(now())
+  expiresAt         DateTime?     // For time-limited reviews
+
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+enum QueuePriority {
+  URGENT    // Auto-flagged, needs review within 24h
+  HIGH      // High hours, new approver, flagged program
+  STANDARD  // Normal random sample
+  BACKLOG   // Older projects catch-up
+}
+
+// Daily/weekly stats cache (refreshed periodically)
+model ReviewerStats {
+  id                String    @id @default(cuid())
+
+  reviewerSlackId   String
+  periodStart       DateTime  // Week start date
+  periodEnd         DateTime  // Week end date
+
+  reviewsCompleted  Int       @default(0)
+  greenCount        Int       @default(0)
+  yellowCount       Int       @default(0)
+  redCount          Int       @default(0)
+  avgTimePerReview  Float?    // seconds
+
+  streakDays        Int       @default(0)
+  quotaMet          Boolean   @default(false)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([reviewerSlackId, periodStart])
+  @@index([reviewerSlackId])
+  @@index([periodStart])
+}
+
+model ApproverStats {
+  id                String    @id @default(cuid())
+
+  approverSlackId   String
+  periodStart       DateTime
+  periodEnd         DateTime
+
+  projectsApproved  Int       @default(0)
+  projectsChecked   Int       @default(0)
+  greenCount        Int       @default(0)
+  yellowCount       Int       @default(0)
+  redCount          Int       @default(0)
+  accuracyRate      Float?    // Percentage green
+
+  topIssues         Json?     // { issueType: count }
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([approverSlackId, periodStart])
+  @@index([approverSlackId])
+  @@index([periodStart])
+}

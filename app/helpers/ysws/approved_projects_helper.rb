@@ -1,2 +1,0 @@
-module Ysws::ApprovedProjectsHelper
-end

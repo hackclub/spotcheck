@@ -1,5 +1,0 @@
-We are using Rails 8.
-
-We are using  Docker Compose in denvelopment. Prefix CLI commands with `docker compose run web $COMMAND`
-
-Use `rails g` for migrations instead of manually creating them.
