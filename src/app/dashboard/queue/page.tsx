@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import useSWR from "swr"
+import { IssueSelectionModal } from "@/components/IssueSelectionModal"
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -25,12 +26,23 @@ interface QueueItem {
   createdAt: string
 }
 
+interface ModalState {
+  isOpen: boolean
+  item: QueueItem | null
+  assessmentType: "YELLOW" | "RED"
+}
+
 export default function QueuePage() {
   const searchParams = useSearchParams()
   const filterParam = searchParams.get("filter")
   const [filter, setFilter] = useState<"all" | "assigned" | "available">(
     filterParam === "assigned" ? "assigned" : "all"
   )
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    item: null,
+    assessmentType: "YELLOW",
+  })
 
   const { data: queue, isLoading, mutate } = useSWR<QueueItem[]>(
     `/api/reviewer/queue?filter=${filter}`,
@@ -43,6 +55,37 @@ export default function QueuePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ queueItemId: itemId }),
     })
+    if (res.ok) {
+      mutate()
+    }
+  }
+
+  const handleOpenModal = (item: QueueItem, assessmentType: "YELLOW" | "RED") => {
+    setModalState({ isOpen: true, item, assessmentType })
+  }
+
+  const handleCloseModal = () => {
+    setModalState({ isOpen: false, item: null, assessmentType: "YELLOW" })
+  }
+
+  const handleSubmitIssue = async (data: {
+    assessment: "YELLOW" | "RED"
+    issueTypes: string[]
+    notesForAuthor: string
+    internalNotes: string
+  }) => {
+    if (!modalState.item) return
+
+    const res = await fetch("/api/reviewer/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        queueItemId: modalState.item.id,
+        projectId: modalState.item.projectId,
+        ...data,
+      }),
+    })
+
     if (res.ok) {
       mutate()
     }
@@ -93,9 +136,22 @@ export default function QueuePage() {
               key={item.id}
               item={item}
               onClaim={() => handleClaim(item.id)}
+              onYellow={() => handleOpenModal(item, "YELLOW")}
+              onRed={() => handleOpenModal(item, "RED")}
             />
           ))}
         </div>
+      )}
+
+      {/* Issue Selection Modal */}
+      {modalState.item && (
+        <IssueSelectionModal
+          isOpen={modalState.isOpen}
+          onClose={handleCloseModal}
+          onSubmit={handleSubmitIssue}
+          assessmentType={modalState.assessmentType}
+          projectName={modalState.item.projectName}
+        />
       )}
     </div>
   )
@@ -104,9 +160,13 @@ export default function QueuePage() {
 function QueueItemCard({
   item,
   onClaim,
+  onYellow,
+  onRed,
 }: {
   item: QueueItem
   onClaim: () => void
+  onYellow: () => void
+  onRed: () => void
 }) {
   const priorityColors = {
     URGENT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
@@ -187,12 +247,25 @@ function QueueItemCard({
           {/* Actions */}
           <div className="flex flex-col items-end gap-2">
             {item.assignedTo ? (
-              <a
-                href={`/dashboard/review/${item.id}`}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Review Now
-              </a>
+              <>
+                {/* Assessment Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onYellow}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
+                    title="Flag issues"
+                  >
+                    Yellow
+                  </button>
+                  <button
+                    onClick={onRed}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    title="Flag for removal"
+                  >
+                    Red
+                  </button>
+                </div>
+              </>
             ) : (
               <button
                 onClick={onClaim}
